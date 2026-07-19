@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>摄影展 · Photography Exhibition</title>
+<style>
+  /* ============================================================
+     RESET & BASE
+     ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --text: #e0e0e0;
+    --text-muted: #888;
+    --accent: #ffffff;
+    --border: rgba(255,255,255,0.08);
+    --gap: 4px;
+    --font-sans: 'Inter', 'PingFang SC', 'Helvetica Neue', sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+    --transition: 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  h1 { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 300; letter-spacing: -0.02em; }
+  h2 { font-size: clamp(1.3rem, 3vw, 1.6rem); font-weight: 300; color: var(--text-muted); }
+  h3 { font-size: 1rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+  .mono { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.04em; }
+
+  /* ============================================================
+     NAVIGATION — minimal top bar
+     ============================================================ */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.5rem 2rem;
+    mix-blend-mode: difference;
+  }
+  nav .logo { font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em; color: #fff; }
+  nav .links { display: flex; gap: 2rem; list-style: none; }
+  nav .links a {
+    color: rgba(255,255,255,0.7); text-decoration: none;
+    font-size: 0.8rem; letter-spacing: 0.05em; transition: var(--transition);
+  }
+  nav .links a:hover { color: #fff; }
+
+  /* ============================================================
+     HERO — full-bleed image with overlay title
+     ============================================================ */
+  .hero {
+    width: 100%; height: 100vh; position: relative; overflow: hidden;
+    display: flex; align-items: flex-end; justify-content: flex-start;
+  }
+  .hero img {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover; filter: brightness(0.7);
+  }
+  .hero .hero-text {
+    position: relative; z-index: 2; padding: 3rem 2rem; max-width: 700px;
+  }
+  .hero .hero-text h1 { color: #fff; margin-bottom: 0.6rem; }
+  .hero .hero-text .mono { color: rgba(255,255,255,0.55); }
+
+  /* ============================================================
+     SECTION HEADERS
+     ============================================================ */
+  .section-header {
+    padding: 5rem 2rem 2rem; max-width: 1200px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .section-header h3 { margin-bottom: 0.4rem; }
+  .section-header .mono { max-width: 300px; }
+
+  /* ============================================================
+     GALLERY STYLE 1 — Tight grid (4 columns)
+     ============================================================ */
+  .grid-tight {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--gap);
+    max-width: 1400px; margin: 0 auto; padding: 0 var(--gap);
+  }
+  .grid-tight .item {
+    aspect-ratio: 1 / 1; overflow: hidden; cursor: pointer; position: relative;
+  }
+  .grid-tight .item img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  .grid-tight .item:hover img { transform: scale(1.04); }
+  .grid-tight .item .overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.45); opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+  }
+  .grid-tight .item:hover .overlay { opacity: 1; }
+  .grid-tight .item .overlay span { color: #fff; font-size: 1.4rem; }
+
+  /* ============================================================
+     GALLERY STYLE 2 — Masonry-like (CSS columns)
+     ============================================================ */
+  .grid-masonry {
+    columns: 3; column-gap: var(--gap);
+    max-width: 1400px; margin: 0 auto; padding: 0 var(--gap);
+  }
+  .grid-masonry .item {
+    break-inside: avoid; margin-bottom: var(--gap);
+    overflow: hidden; cursor: pointer; position: relative;
+  }
+  .grid-masonry .item img {
+    width: 100%; display: block;
+    transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  .grid-masonry .item:hover img { transform: scale(1.03); }
+  .grid-masonry .item .caption {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 2rem 1rem 1rem;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    opacity: 0; transition: var(--transition);
+  }
+  .grid-masonry .item:hover .caption { opacity: 1; }
+  .grid-masonry .item .caption .mono { color: #ddd; font-size: 0.7rem; }
+
+  /* ============================================================
+     GALLERY STYLE 3 — Full-bleed single column
+     ============================================================ */
+  .grid-full {
+    max-width: 900px; margin: 0 auto; padding: 0 2rem;
+  }
+  .grid-full .item {
+    margin-bottom: 8rem; cursor: pointer;
+  }
+  .grid-full .item img {
+    width: 100%; display: block;
+    transition: transform 0.5s ease;
+  }
+  .grid-full .item:hover img { transform: scale(1.015); }
+  .grid-full .item .meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-top: 1rem;
+  }
+
+  /* ============================================================
+     LIGHTBOX
+     ============================================================ */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.92); display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(12px);
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 90vw; max-height: 85vh; object-fit: contain; }
+  .lightbox .close {
+    position: absolute; top: 1.5rem; right: 2rem;
+    color: #fff; font-size: 2rem; cursor: pointer; opacity: 0.6;
+    transition: var(--transition); background: none; border: none;
+  }
+  .lightbox .close:hover { opacity: 1; }
+  .lightbox .caption { position: absolute; bottom: 2rem; text-align: center; }
+  .lightbox .next, .lightbox .prev {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    color: #fff; font-size: 2rem; cursor: pointer; opacity: 0.4;
+    background: none; border: none; padding: 1rem;
+    transition: var(--transition);
+  }
+  .lightbox .next:hover, .lightbox .prev:hover { opacity: 1; }
+  .lightbox .prev { left: 1rem; }
+  .lightbox .next { right: 1rem; }
+
+  /* ============================================================
+     ABOUT SECTION
+     ============================================================ */
+  .about {
+    max-width: 700px; margin: 0 auto; padding: 8rem 2rem;
+  }
+  .about p { font-size: 1.15rem; color: var(--text-muted); margin-bottom: 1.5rem; font-weight: 300; line-height: 1.8; }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem 2rem; display: flex; justify-content: space-between;
+    max-width: 1200px; margin: 0 auto;
+  }
+
+  /* ============================================================
+     MOBILE
+     ============================================================ */
+  @media (max-width: 768px) {
+    .grid-tight { grid-template-columns: repeat(2, 1fr); }
+    .grid-masonry { columns: 1; }
+    nav { padding: 1rem 1.2rem; }
+    nav .links { gap: 1rem; }
+    .hero .hero-text { padding: 2rem 1.2rem; }
+    .section-header { flex-direction: column; gap: 0.5rem; padding: 3rem 1.2rem 1.5rem; }
+    .about { padding: 4rem 1.2rem; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ============================================================
+     NAV
+     ============================================================ -->
+<nav>
+  <span class="logo">EXHIBIT / 2026</span>
+  <ul class="links">
+    <li><a href="#portfolio">作品</a></li>
+    <li><a href="#full">精选</a></li>
+    <li><a href="#about">关于</a></li>
+  </ul>
+</nav>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero">
+  <img src="https://picsum.photos/seed/hero-exhibit/1920/1080"
+       alt="Hero" loading="eager">
+  <div class="hero-text">
+    <h1>光影叙事<br>Light & Shadow</h1>
+    <span class="mono">个人摄影展 · 2026 · 策展人精选</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     GALLERY 1 — Tight grid (4-col)
+     ============================================================ -->
+<section id="portfolio">
+  <div class="section-header">
+    <div>
+      <span class="mono">01 / 作品集</span>
+      <h3>Portfolio Grid</h3>
+    </div>
+    <span class="mono">四列紧密网格 · Hover 放大 · 点击灯箱</span>
+  </div>
+
+  <div class="grid-tight" id="gallery1">
+    <!-- JS 动态生成 -->
+  </div>
+</section>
+
+<!-- ============================================================
+     GALLERY 2 — Masonry (3-col, varied heights)
+     ============================================================ -->
+<section id="masonry">
+  <div class="section-header">
+    <div>
+      <span class="mono">02 / 叙事</span>
+      <h3>Visual Stories</h3>
+    </div>
+    <span class="mono">瀑布流布局 · 不等高 · 悬停字幕</span>
+  </div>
+
+  <div class="grid-masonry" id="gallery2">
+    <!-- JS 动态生成 -->
+  </div>
+</section>
+
+<!-- ============================================================
+     GALLERY 3 — Full-bleed single column
+     ============================================================ -->
+<section id="full">
+  <div class="section-header">
+    <div>
+      <span class="mono">03 / 精选</span>
+      <h3>Featured Work</h3>
+    </div>
+    <span class="mono">全幅单列 · 大图呈现 · 沉浸式浏览</span>
+  </div>
+
+  <div class="grid-full" id="gallery3">
+    <!-- JS 动态生成 -->
+  </div>
+</section>
+
+<!-- ============================================================
+     ABOUT
+     ============================================================ -->
+<section id="about" class="about">
+  <span class="mono">04 / 关于</span>
+  <br><br>
+  <p>
+    我以镜头为笔，在光影之间书写日常的诗意。从城市街角的偶然一瞥，到山川湖泊的深远凝视——每张照片都是时间切片中的一次深呼吸。
+  </p>
+  <p>
+    本展汇集了 2023-2026 年间精选的 24 幅作品，分为「城市肌理」「自然呼吸」「人物肖像」三个系列。这些影像不求完美构图，只忠实地记录下那一刻照进取景器里的光。
+  </p>
+  <p>
+    <span class="mono">联系方式 · contact@example.com · @photographer_name</span>
+  </p>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <span class="mono">© 2026 Photography Exhibition</span>
+  <span class="mono">All rights reserved</span>
+</footer>
+
+<!-- ============================================================
+     LIGHTBOX
+     ============================================================ -->
+<div class="lightbox" id="lightbox">
+  <button class="close" onclick="closeLightbox()">&times;</button>
+  <button class="prev" onclick="navLightbox(-1)">&#8249;</button>
+  <img src="" alt="" id="lightbox-img">
+  <button class="next" onclick="navLightbox(1)">&#8250;</button>
+  <div class="caption">
+    <span class="mono" id="lightbox-caption" style="color:#aaa;"></span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script>
+  // --- 占位图库：使用 picsum 的不同 seed 生成风格各异的摄影感图片 ---
+  const PHOTOS = [
+    { seed: 'mountain-dawn',     cat: '自然呼吸', title: '晨光 · 山脉' },
+    { seed: 'city-rain',         cat: '城市肌理', title: '雨夜街角' },
+    { seed: 'portrait-1',        cat: '人物肖像', title: '凝视' },
+    { seed: 'ocean-wave',        cat: '自然呼吸', title: '海浪' },
+    { seed: 'architecture-1',    cat: '城市肌理', title: '几何立面' },
+    { seed: 'forest-mist',       cat: '自然呼吸', title: '林间雾霭' },
+    { seed: 'street-lamp',       cat: '城市肌理', title: '路灯' },
+    { seed: 'portrait-2',        cat: '人物肖像', title: '侧影' },
+    { seed: 'desert-dune',       cat: '自然呼吸', title: '沙丘曲线' },
+    { seed: 'metro-station',     cat: '城市肌理', title: '地铁站' },
+    { seed: 'portrait-3',        cat: '人物肖像', title: '微笑' },
+    { seed: 'lake-mirror',       cat: '自然呼吸', title: '镜湖' },
+    { seed: 'neon-alley',        cat: '城市肌理', title: '霓虹巷' },
+    { seed: 'mountain-snow',     cat: '自然呼吸', title: '雪山之巅' },
+    { seed: 'portrait-4',        cat: '人物肖像', title: '沉思' },
+    { seed: 'bridge-fog',        cat: '城市肌理', title: '雾中桥' },
+    { seed: 'sunset-field',      cat: '自然呼吸', title: '暮色原野' },
+    { seed: 'market-crowd',      cat: '城市肌理', title: '集市人群' },
+    { seed: 'portrait-5',        cat: '人物肖像', title: '回眸' },
+    { seed: 'waterfall',         cat: '自然呼吸', title: '飞瀑' },
+    { seed: 'window-light',      cat: '城市肌理', title: '窗光' },
+    { seed: 'star-trail',        cat: '自然呼吸', title: '星轨' },
+    { seed: 'portrait-6',        cat: '人物肖像', title: '光影之间' },
+    { seed: 'coast-sunset',      cat: '自然呼吸', title: '海岸日落' },
+  ];
+
+  const CDN = (seed, w, h) =>
+    `https://picsum.photos/seed/${seed}/${w}/${h}`;
+
+  let lightboxImages = [];
+  let currentIndex = 0;
+
+  // --- 构建 Gallery 1: 4 列紧密网格 ---
+  const g1 = document.getElementById('gallery1');
+  PHOTOS.slice(0, 16).forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <img src="${CDN(p.seed, 600, 600)}" alt="${p.title}" loading="${i < 8 ? 'eager' : 'lazy'}">
+      <div class="overlay"><span>+</span></div>
+    `;
+    div.addEventListener('click', () => openLightbox(i, 'gallery1'));
+    div.dataset.seed = p.seed;
+    div.dataset.title = p.title;
+    g1.appendChild(div);
+  });
+
+  // --- 构建 Gallery 2: 瀑布流 ---
+  const g2 = document.getElementById('gallery2');
+  PHOTOS.slice(4, 16).forEach((p, i) => {
+    const h = [700, 500, 600, 800, 550, 650, 750, 480, 620, 720, 530, 680][i];
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <img src="${CDN(p.seed, 800, h)}" alt="${p.title}" loading="lazy">
+      <div class="caption"><span class="mono">${p.cat} · ${p.title}</span></div>
+    `;
+    div.addEventListener('click', () => openLightbox(i, 'gallery2'));
+    div.dataset.seed = p.seed;
+    div.dataset.title = p.title;
+    g2.appendChild(div);
+  });
+
+  // --- 构建 Gallery 3: 全幅单列 ---
+  const g3 = document.getElementById('gallery3');
+  PHOTOS.slice(16, 24).forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <img src="${CDN(p.seed, 1800, 900)}" alt="${p.title}" loading="lazy">
+      <div class="meta">
+        <span class="mono">${p.cat}</span>
+        <span style="font-size:0.85rem;">${p.title}</span>
+      </div>
+    `;
+    div.addEventListener('click', () => openLightbox(i, 'gallery3'));
+    div.dataset.seed = p.seed;
+    div.dataset.title = `精选 · ${p.title}`;
+    g3.appendChild(div);
+  });
+
+  // --- Lightbox ---
+  function openLightbox(index, galleryId) {
+    const gallery = document.getElementById(galleryId);
+    const items = gallery.querySelectorAll('.item');
+    lightboxImages = Array.from(items).map(el => ({
+      seed: el.dataset.seed,
+      title: el.dataset.title,
+      src: CDN(el.dataset.seed, 2400, 1600),
+    }));
+    currentIndex = index;
+    showImage();
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function navLightbox(dir) {
+    currentIndex = (currentIndex + dir + lightboxImages.length) % lightboxImages.length;
+    showImage();
+  }
+
+  function showImage() {
+    const img = document.getElementById('lightbox-img');
+    const cap = document.getElementById('lightbox-caption');
+    const data = lightboxImages[currentIndex];
+    img.src = data.src;
+    img.alt = data.title;
+    cap.textContent = `${currentIndex + 1} / ${lightboxImages.length} · ${data.title}`;
+  }
+
+  // --- 键盘控制 ---
+  document.addEventListener('keydown', e => {
+    const lb = document.getElementById('lightbox');
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navLightbox(-1);
+    if (e.key === 'ArrowRight') navLightbox(1);
+  });
+
+  // --- 点击背景关闭 ---
+  document.getElementById('lightbox').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeLightbox();
+  });
+</script>
+
+</body>
+</html>
